@@ -1,52 +1,30 @@
 # Trellis
 
-Trellis keeps a codebase's most important guarantees true when most of its code is written by AI agents.
+## Why every code base needs a trellis
 
-Trellis defends two things: the guarantees the codebase depends on, and the integrity of the checks that hold them. The agent may propose changes to a check and but it can't merge them without a human signing off.
+Should outline the motivations here i.e. we want coding agents to have more and more autonomy including approving and merging PRs.  However there are certain important architectural areas where we want to make sure that a human ratifies the change.
 
-> Trellis is being moved here from the private codebase it grew up in. The import fences below are the first piece. The tamper check, a sample app showing the patterns, and the npm package follow.
+Have a read of what I wrote here - https://grovehq.com/blog/software-factory about trellis.  Maybe talk about some of the motivating examples i.e. how some bugs are terrible to have in the code and we want to make them just not attainable.
 
-## The idea
+### The Analogy
 
-Some guarantees are about all code, present and future: no route is served without the auth gate, nothing talks to the database except through the tenant-scoped client. Ask of each one whether a machine can confirm it by reading the code or only by running it.
+We need to talk about the analogy with a real trellis (and a pic may be nice here). We are growing a code base and we want to make sure that all code past a present grows according to the architecture (the frame).
 
-- Confirmable by **reading** the code's form (imports, call sites, wrappers, types): make it an enforced invariant, a check that fails the build.
-- Confirmable only by **running** the code: it is a test.
-- A question of whether the outcome is **right**: it is for review.
+## How trellis achieves this
 
-An invariant usually protects the one sanctioned way a codebase does something important, against an author who would bypass it, strip it, or write a second version beside it.
+We need to talk about how this code base does 2 things.
 
-A check the author can switch off is a suggestion, so the files that define the checks need a human to ratify any change to them. That is the tamper check.
+1.) It establishes the notion of a frame, certain files in the code base form part of the frame, which protects the architectural invariants.  And agents cannot make changes to them without a human ratification.  This is done via proof of presence.  We should also talk about a principle that what goes into the frame is the smallest amount of code to guarantee the frame.
 
-## Import fences
+Again a pic here may really help showing a small number of files being the frame and guaranteeing what happens in all the other files (past and present).
 
-A fence makes one file the only way to reach a module. Everything else that imports it fails lint, with a message saying where to go instead.
+2.) A set of utilities and patterns for the common things you want to put into a frame.  These are for the common patterns that we have seen that help us protect authentication, authorization and multi-tenancy.
 
-```js
-// eslint.config.js
-import { confineImport } from "@grovehq/trellis/eslint";
+We should then setup a patterns doc folder, which may eventually link to the sample repo (or we may put samples in this repo, need to discuss).
 
-export default [
-  confineImport(
-    [
-      {
-        package: "pg",
-        allowlist: "/src/db/client.js",
-        message: "Reach the database through src/db/client.js, which scopes every query to the tenant.",
-      },
-    ],
-    { files: ["src/**/*.js"], root: import.meta.dirname },
-  ),
-];
-```
+## What Trellis does not do (bit of a disclaimer on security)
 
-Each ban names its target with `package` (an exact specifier) or `pathSuffix` (the tail of a first-party module's path, matched at any depth). `allowlist` is one or more paths from `root`: an exact file or `/dir/**`. Add `allowedExports` to leave some of a module's exports free and fence the rest.
-
-Static imports, re-exports and dynamic imports are all covered; type-only imports are exempt. `confineImport` also turns on `trellis/require-literal-dynamic-import`, because a computed `import()` is the one import a fence cannot read.
-
-## What Trellis does not do
-
-Trellis checks that a mechanism is present and reached the right way. It cannot judge whether the mechanism is correct, and a passing check is not a statement that a codebase is secure. Review still owns that.
+Trellis is just checking that a mechanism is present and reached the right way. It is not judging whether the mechanism is correct, that is up to you. Please please don’t assume you can adopt Trellis and your coding agents will produce secure code. Trellis helps you focus your attention on where it is needed most, but the architectural patterns required to make your coding agents produce the necessary code are unique to your code base and your application.  We have found manual review and red teaming are necessary to maintain your ever evolving frames which in turn maintain your ever evolving codebase.
 
 ## License
 
