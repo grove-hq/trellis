@@ -1,30 +1,36 @@
 # Trellis
 
-## Why every code base needs a trellis
+## Why every codebase needs a trellis
 
-Should outline the motivations here i.e. we want coding agents to have more and more autonomy including approving and merging PRs.  However there are certain important architectural areas where we want to make sure that a human ratifies the change.
+We want coding agents to have more and more autonomy, up to approving and merging their own PRs. That only works if some parts of the codebase are off limits to them. A route that ships without an auth check, or one tenant's data reaching another tenant, is a bug you can't afford even once. Telling an agent not to do it, in capital letters, works most of the time, and most of the time isn't good enough for these.
 
-Have a read of what I wrote here - https://grovehq.com/blog/software-factory about trellis.  Maybe talk about some of the motivating examples i.e. how some bugs are terrible to have in the code and we want to make them just not attainable.
+Trellis is for those parts. The aim is that the worst bugs fail the build instead of depending on an agent remembering a rule, and that a human ratifies any change to the checks that make them fail. Everywhere else, the agents can get on with it.
 
-### The Analogy
+We wrote about how this fits into the way we build software in [Software factory](https://grovehq.com/blog/software-factory).
 
-We need to talk about the analogy with a real trellis (and a pic may be nice here). We are growing a code base and we want to make sure that all code past a present grows according to the architecture (the frame).
+### The analogy
 
-## How trellis achieves this
+A trellis is a frame that a plant grows along. The gardener doesn't place each shoot. They build the frame, and the plant fills it in at its own speed, in the shape the frame allows.
 
-We need to talk about how this code base does 2 things.
+A codebase written by agents grows the same way. You can't inspect every line, but you can build the frame: a small set of files that decides the shape all the other code has to take, the code written last year and the code written next month.
 
-1.) It establishes the notion of a frame, certain files in the code base form part of the frame, which protects the architectural invariants.  And agents cannot make changes to them without a human ratification.  This is done via proof of presence.  We should also talk about a principle that what goes into the frame is the smallest amount of code to guarantee the frame.
+## How Trellis achieves this
 
-Again a pic here may really help showing a small number of files being the frame and guaranteeing what happens in all the other files (past and present).
+Trellis does two things.
 
-2.) A set of utilities and patterns for the common things you want to put into a frame.  These are for the common patterns that we have seen that help us protect authentication, authorization and multi-tenancy.
+**1. It makes the frame something only a human can change.** Certain files in the codebase form the frame: the lint rules, types, dependency rules and CI workflows that hold your architectural invariants. An agent can propose a change to a frame file like any other change. It can't land one until a human has ratified that exact change with proof of presence: a signature that takes the person's fingerprint, which an agent working with that person's credentials can't supply.
 
-We should then setup a patterns doc folder, which may eventually link to the sample repo (or we may put samples in this repo, need to discuss).
+What goes into the frame is the smallest amount of code that holds the invariant. A small frame is one a human can actually read when asked to ratify a change to it, and it leaves everything outside it free for agents to change.
 
-## What Trellis does not do (bit of a disclaimer on security)
+**2. It gives you utilities and patterns for the common things you want in a frame.** These are the ones we have needed to protect authentication, authorization and multi-tenancy:
 
-Trellis is just checking that a mechanism is present and reached the right way. It is not judging whether the mechanism is correct, that is up to you. Please please don’t assume you can adopt Trellis and your coding agents will produce secure code. Trellis helps you focus your attention on where it is needed most, but the architectural patterns required to make your coding agents produce the necessary code are unique to your code base and your application.  We have found manual review and red teaming are necessary to maintain your ever evolving frames which in turn maintain your ever evolving codebase.
+- [Import fences](docs/patterns/import-fences.md): make one file the only way to reach a module.
+
+> Trellis is being moved here from the codebase it grew up in. The import fences are here today. The frame check with human ratification, more patterns and the npm package follow.
+
+## What Trellis does not do
+
+Trellis only checks that a mechanism is present and reached the right way. It does not judge whether the mechanism is correct; that is up to you. Please, please don't assume you can adopt Trellis and your coding agents will produce secure code. Trellis helps you focus your attention where it is needed most, but the architectural patterns that make your coding agents produce the right code are unique to your codebase and your application. We have found that manual review and red teaming are still necessary to maintain your ever-evolving frames, which in turn maintain your ever-evolving codebase.
 
 ## License
 
