@@ -34,11 +34,7 @@ The utilities supplied here are the ones we commonly use under many of the archi
 
 ## Patterns
 
-Each pattern takes one thing you need to be true of the whole codebase and walks through an example of enforcing it with the framework and the utilities.
-
-- [Authentication](docs/patterns/authentication.md): no request reaches a handler without an authenticated caller.
-
-Authorization and multi-tenancy follow.
+TBD.
 
 ## What Trellis does not do (a bit of a disclaimer)
 
