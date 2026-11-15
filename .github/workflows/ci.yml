@@ -40,3 +40,9 @@ jobs:
 
       - name: Test
         run: pnpm test
+
+      # The lockfile holds the newest supported ESLint; this is the oldest.
+      - name: Test on ESLint 9
+        run: |
+          pnpm add -D eslint@9
+          pnpm test
