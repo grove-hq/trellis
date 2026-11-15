@@ -10,23 +10,21 @@ The way to avoid them is strong architectural patterns. If, for example, every r
 
 However, a pattern only protects you if all of the code follows it, and an agent trying to get a test to pass may not follow the pattern when there is a shorter path. So you need something that enforces the patterns across the codebase: checks that fail the build when code skips one, and a human who ratifies any change to those checks. That is Trellis. Everywhere else, the agents can get on with it.
 
-### The analogy
+### Why call it trellis?
 
 A trellis is a frame that a plant grows along. The gardener doesn't place each shoot. They build the frame, and the plant fills it in at its own speed, in the shape the frame allows.
 
-A codebase written by agents grows the same way. You can't inspect every line, but you can build the frame. The frame is a small set of files that decides the shape of all the other code, the code written last year and the code written next month.
+A codebase written by agents grows the same way. You can't inspect every line, but you can build the frame. The frame is a small set of files that decides the shape of all the other code, the code written last year and the code written next month. All of it needs to stay on the frame.
 
 ## How Trellis achieves this
 
 Trellis does two things.
 
-**1. It provides a framework that makes the frame something only a human can change.** Certain files in the codebase form the frame: the lint rules, types, dependency rules and CI workflows that hold your architectural invariants. An agent can propose a change to a frame file like any other change. It can't land one until a human has ratified that exact change with proof of presence. Proof of presence is a signature that, for example, uses the person's fingerprint to ensure they have signed off (which an agent working with that person's credentials can't supply).
+**1. It provides a framework that makes the frame something only a human can change.** Certain files in the codebase form the frame: the lint rules, types, dependency rules and CI workflows that hold your architectural invariants. An agent can propose a change to a frame file like any other change. It can't land one until a human has ratified that exact change with proof of presence. Proof of presence is a signature that, for example, uses the person's fingerprint to ensure they have signed off on the change (which an agent working with that person's credentials can't supply).
 
 What goes into the frame is the smallest amount of code that holds the invariant. A small frame is one a human can actually read when asked to ratify a change to it, and it leaves everything outside it free for agents to change.
 
 **2. It provides utilities and patterns for the common checks that should be in a frame.** The [utilities](#utilities) are checks you configure. The [patterns](#patterns) show how to use the framework and the utilities to enforce an architectural pattern, so that coding agents stick to it.
-
-> Trellis is being moved here from the codebase it grew up in. The import fences are here today. The frame check with human ratification, more utilities and patterns, and the npm package follow.
 
 ## Utilities
 
@@ -42,9 +40,9 @@ Each pattern takes one thing you need to be true of the whole codebase and walks
 
 Authorization and multi-tenancy follow.
 
-## What Trellis does not do
+## What Trellis does not do (a bit of a disclaimer)
 
-Trellis only checks that a mechanism is present and reached the right way. It does not judge whether the mechanism is correct; that is up to you. Please, please don't assume you can adopt Trellis and your coding agents will produce secure code. Trellis helps you focus your attention where it is needed most, but the architectural patterns that make your coding agents produce the right code are unique to your codebase and your application. We have found that manual review and red teaming are still necessary to maintain your ever-evolving frames, which in turn maintain your ever-evolving codebase.
+Trellis only checks that a mechanism is present and reached the right way. It does not judge whether the mechanism is correct; that is up to you. Please, please don't assume you can adopt Trellis and your coding agents will produce secure code. Trellis helps you focus your attention where it is needed most, but the architectural patterns that make your coding agents produce the right code are unique to your codebase and your application. We have found that manual review and red teaming are necessary to maintain your ever-evolving frames, which, in turn, maintain your ever-evolving codebase.
 
 ## License
 
