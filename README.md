@@ -2,11 +2,9 @@
 
 ## Why every codebase needs a trellis
 
-We want coding agents to have more and more autonomy, up to approving and merging their own PRs. That only works if some parts of the codebase are off limits to them. A route that ships without an auth check, or one tenant's data reaching another tenant, is a bug you can't afford even once. Telling an agent not to do it, in capital letters, works most of the time, and most of the time isn't good enough for these.
+We want coding agents (that are part of a [Software factory](https://grovehq.com/blog/software-factory)) to have more and more autonomy, up to and including approving and merging PRs. That only works if some parts of the codebase are off limits to them. A route that ships without an auth check, or one tenant's data reaching another tenant, is a bug you can't afford even once. Telling an agent not to do it, works most of the time, but most of the time isn't good enough for these kinds of bugs.
 
-Trellis is for those parts. The aim is that the worst bugs fail the build instead of depending on an agent remembering a rule, and that a human ratifies any change to the checks that make them fail. Everywhere else, the agents can get on with it.
-
-We wrote about how this fits into the way we build software in [Software factory](https://grovehq.com/blog/software-factory).
+Trellis is for those parts. The aim is that the worst bugs, that a coding agent introduces, fail the build.  Instead of depending on an agent remembering a rule, and that a human ratifies any change to the checks that make them fail. Everywhere else, the agents can get on with it.
 
 ### The analogy
 
