@@ -2,9 +2,13 @@
 
 ## Why every codebase needs a trellis
 
-We want coding agents (that are part of a [Software factory](https://grovehq.com/blog/software-factory)) to have more and more autonomy, up to and including approving and merging PRs. That only works if some parts of the codebase are off limits to them. A route that ships without an auth check, or one tenant's data reaching another tenant, is a bug you can't afford even once. Telling an agent not to do it, works most of the time, but most of the time isn't good enough for these kinds of bugs.
+We want coding agents (that are part of a [software factory](https://grovehq.com/blog/software-factory)) to have more and more autonomy, up to and including approving and merging PRs.
 
-Trellis is for those parts. The aim is that the worst bugs, that a coding agent introduces, fail the build.  Instead of depending on an agent remembering a rule, and that a human ratifies any change to the checks that make them fail. Everywhere else, the agents can get on with it.
+But some bugs are terrible. A route that ships without an auth check, or one tenant's data reaching another tenant, is a bug you can't afford even once. Telling an agent not to introduce one works most of the time, but most of the time isn't good enough for these kinds of bugs.
+
+The way to avoid them is strong architectural patterns. If every route is built from one auth wrapper, and every query goes through one tenant-scoped client, then the bug is handled in one place, and any code that goes through that place is safe from it.
+
+A pattern only protects you if all of the code follows it, and an agent trying to get a build to pass will go around a pattern when that is the shorter path. So you need something that enforces the patterns across the codebase: checks that fail the build when code goes around one, and a human who ratifies any change to those checks. That is Trellis. Everywhere else, the agents can get on with it.
 
 ### The analogy
 
