@@ -13,6 +13,9 @@
     "node": ">=22"
   },
   "packageManager": "pnpm@10.33.0",
+  "exports": {
+    "./eslint": "./src/eslint/index.js"
+  },
   "files": [
     "src/",
     "!src/**/*.test.js",
@@ -22,8 +25,17 @@
     "lint": "eslint .",
     "test": "node --test"
   },
+  "peerDependencies": {
+    "eslint": "^9.0.0 || ^10.0.0"
+  },
+  "peerDependenciesMeta": {
+    "eslint": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@typescript-eslint/parser": "^8.72.2",
     "eslint": "^10.15.0",
     "globals": "^17.0.0"
   }
