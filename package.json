@@ -1,0 +1,30 @@
+{
+  "name": "@grovehq/trellis",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Keeps a codebase's most important guarantees true when most of its code is written by AI agents.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/grove-hq/trellis.git"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@10.33.0",
+  "files": [
+    "src/",
+    "!src/**/*.test.js",
+    "NOTICE"
+  ],
+  "scripts": {
+    "lint": "eslint .",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.15.0",
+    "globals": "^17.0.0"
+  }
+}
