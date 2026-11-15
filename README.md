@@ -2,9 +2,9 @@
 
 ## Why every codebase needs a trellis
 
-We want coding agents (that are part of a [software factory](https://grovehq.com/blog/software-factory)) to have more and more autonomy, up to and including approving and merging each others PRs.
+We want coding agents (that are part of a [software factory](https://grovehq.com/blog/software-factory)) to have more and more autonomy, up to and including approving and merging each other's PRs.
 
-But some bugs are a lot worse that others. A route that ships without an auth check, or one tenant's data reaching another tenant, is a bug you can't afford even once. Telling an agent not to introduce one works most of the time, but most of the time isn't good enough for these kinds of bugs.
+But some bugs are a lot worse than others. A route that ships without an auth check, or one tenant's data reaching another tenant, is a bug you can't afford even once. Telling an agent not to introduce one works most of the time, but most of the time isn't good enough for these kinds of bugs.
 
 The way to avoid them is strong architectural patterns. If, for example, every route is built from one auth wrapper, and every query goes through one tenant-scoped client, then as long as that pattern is followed, entire classes of bugs are unreachable.
 
@@ -14,21 +14,31 @@ However, a pattern only protects you if all of the code follows it, and an agent
 
 A trellis is a frame that a plant grows along. The gardener doesn't place each shoot. They build the frame, and the plant fills it in at its own speed, in the shape the frame allows.
 
-A codebase written by agents grows the same way. You can't inspect every line, but you can build the frame.  The frame is a small set of files that decides the shape all the other code, the code written last year and the code written next month.
+A codebase written by agents grows the same way. You can't inspect every line, but you can build the frame. The frame is a small set of files that decides the shape of all the other code, the code written last year and the code written next month.
 
 ## How Trellis achieves this
 
 Trellis does two things.
 
-**1. It provides a framework that makes the frame something only a human can change.** Certain files in the codebase form the frame: the lint rules, types, dependency rules and CI workflows that hold your architectural invariants. An agent can propose a change to a frame file like any other change. It can't land one until a human has ratified that exact change with proof of presence.  Proof of presence is a signature that for example, uses the person's fingerprint, to ensure they have signed off (which an agent working with that person's credentials can't supply).
+**1. It provides a framework that makes the frame something only a human can change.** Certain files in the codebase form the frame: the lint rules, types, dependency rules and CI workflows that hold your architectural invariants. An agent can propose a change to a frame file like any other change. It can't land one until a human has ratified that exact change with proof of presence. Proof of presence is a signature that, for example, uses the person's fingerprint to ensure they have signed off (which an agent working with that person's credentials can't supply).
 
 What goes into the frame is the smallest amount of code that holds the invariant. A small frame is one a human can actually read when asked to ratify a change to it, and it leaves everything outside it free for agents to change.
 
-**2. It provides utilities and patterns for the common checks that should be in a frame.** The utilities supplied here are the ones we commonly use under many of the architectural patterns we have established in grove.  We found we needed to layer a few things atop the foundation of enlist, dependency cruiser etc.  We also supply a set of patterns that outline how to leverage the framework and utilities to enforce your architectural patterns, ensuring that coding agents stick to them.
+**2. It provides utilities and patterns for the common checks that should be in a frame.** The [utilities](#utilities) are checks you configure. The [patterns](#patterns) show how to use the framework and the utilities to enforce an architectural pattern, so that coding agents stick to it.
 
-- [Import fences](docs/patterns/import-fences.md): make one file the only way to reach a module.
+> Trellis is being moved here from the codebase it grew up in. The import fences are here today. The frame check with human ratification, more utilities and patterns, and the npm package follow.
 
-> Trellis is being moved here from the codebase it grew up in. The import fences are here today. The frame check with human ratification, more patterns and the npm package follow.
+## Utilities
+
+The utilities supplied here are the ones we commonly use under many of the architectural patterns we have established in Grove. We found we needed to layer a few things on top of the foundation of ESLint, dependency-cruiser and the like.
+
+- [Import fences](docs/utilities/import-fences.md): make one file the only way to reach a module.
+
+## Patterns
+
+Each pattern takes one architectural rule and shows how to enforce it with the framework and the utilities.
+
+- [One sanctioned path](docs/patterns/one-sanctioned-path.md): something powerful, such as the database, is reached only through the wrapper that makes it safe.
 
 ## What Trellis does not do
 
