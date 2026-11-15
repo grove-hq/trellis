@@ -16,6 +16,11 @@ A trellis is a frame that a plant grows along. The gardener doesn't place each s
 
 A codebase written by agents grows the same way. You can't inspect every line, but you can build the frame. The frame is a small set of files that decides the shape of all the other code, the code written last year and the code written next month. All of it needs to stay on the frame.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/trellis-dark.svg">
+  <img src="docs/images/trellis-light.svg" alt="A vine growing along a trellis. The trellis is the frame: a few files that hold the architecture, where a human ratifies every change. The vine is all the other code, which agents write and merge freely, including code not written yet.">
+</picture>
+
 ## How Trellis achieves this
 
 Trellis does two things.
