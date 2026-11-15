@@ -38,9 +38,9 @@ The utilities supplied here are the ones we commonly use under many of the archi
 
 Each pattern takes one thing you need to be true of the whole codebase and walks through an example of enforcing it with the framework and the utilities.
 
-- [Multi-tenancy](docs/patterns/multi-tenancy.md): one tenant's data never reaches another tenant.
+- [Authentication](docs/patterns/authentication.md): no request reaches a handler without an authenticated caller.
 
-Authentication and authorization follow.
+Authorization and multi-tenancy follow.
 
 ## What Trellis does not do
 
