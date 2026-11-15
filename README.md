@@ -36,9 +36,11 @@ The utilities supplied here are the ones we commonly use under many of the archi
 
 ## Patterns
 
-Each pattern takes one architectural rule and shows how to enforce it with the framework and the utilities.
+Each pattern takes one thing you need to be true of the whole codebase and walks through an example of enforcing it with the framework and the utilities.
 
-- [One sanctioned path](docs/patterns/one-sanctioned-path.md): something powerful, such as the database, is reached only through the wrapper that makes it safe.
+- [Multi-tenancy](docs/patterns/multi-tenancy.md): one tenant's data never reaches another tenant.
+
+Authentication and authorization follow.
 
 ## What Trellis does not do
 
