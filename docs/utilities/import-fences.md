@@ -22,7 +22,7 @@ export default [
 ];
 ```
 
-Each ban names its target with `package` (an npm package or Node built-in, including its subpaths) or `pathSuffix` (the tail of a first-party module's path, matched at any depth). `allowlist` is one or more paths from `root`: an exact file or `/dir/**`. Add `allowedExports` to leave some of a module's exports free and fence the rest.
+Each ban names its target with `package` (an npm package or Node built-in, including its subpaths) or `pathSuffix` (the tail of a first-party module's path, matched at any depth). `allowlist` is one or more paths from `root`: an exact file or `/dir/**`. Add `allowedExports` to leave some of a module's exports free and fence the rest, or `allowedSubpaths` to leave some of a package's subpaths free, such as a stylesheet.
 
 Static imports, re-exports and dynamic imports are all covered; type-only imports are exempt. `confineImport` also turns on `trellis/require-literal-dynamic-import`, because a computed `import()` is the one import a fence cannot read.
 

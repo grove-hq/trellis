@@ -477,6 +477,30 @@ ruleTester.run("confine-import (relative spellings)", rule, {
   ],
 });
 
+// A subpath that reaches none of the fenced exports, such as a stylesheet, can
+// be left free by name. Every other subpath stays fenced.
+const SUBPATH_BANS = [
+  {
+    root: ROOT,
+    bans: [
+      {
+        package: "acme-editor",
+        allowedExports: ["Toolbar"],
+        allowedSubpaths: ["styles.css"],
+        allowlist: ["/src/editor.ts"],
+        message: "the editor only through src/editor.ts",
+      },
+    ],
+  },
+];
+ruleTester.run("confine-import (allowed subpaths)", rule, {
+  valid: [{ code: `import "acme-editor/styles.css";`, filename: at("src/layout.tsx"), options: SUBPATH_BANS }],
+  invalid: [
+    { code: `import "acme-editor/other.css";`, filename: at("src/layout.tsx"), options: SUBPATH_BANS, errors: 1 },
+    { code: `import "acme-editor";`, filename: at("src/layout.tsx"), options: SUBPATH_BANS, errors: 1 },
+  ],
+});
+
 // A Node built-in is one module whether or not it is spelled with "node:".
 // "sqlite" has no bare spelling, so that name is an npm package.
 const BUILTIN_BANS = [
