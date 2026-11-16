@@ -1,11 +1,13 @@
 name: Publish to npm
 
-# Publishes `@grovehq/trellis` when a push to main carries a package.json
-# version npm does not have yet. Dispatch it by hand to retry a failed publish.
+# Stages `@grovehq/trellis` on npm when a push to main carries a package.json
+# version npm does not have yet. Dispatch it by hand to retry a failed run.
 #
-# Authenticates through npm trusted publishing, so there is no token. Only the
-# publish job can mint one: it checks out and installs nothing, and its
-# `npm-publish` environment deploys from `main` alone.
+# A staged version is not public: a maintainer approves it on npmjs.com with
+# 2FA, so a merge to main alone cannot release. The workflow authenticates
+# through npm trusted publishing, so there is no token. Only the publish job can
+# mint one: it checks out and installs nothing, and its `npm-publish`
+# environment deploys from `main` alone.
 
 on:
   push:
@@ -74,7 +76,7 @@ jobs:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
 
-      - name: Publish it if npm does not have it
+      - name: Stage it if npm does not have it
         env:
           VERSION: ${{ needs.pack.outputs.version }}
         run: |
@@ -84,4 +86,4 @@ jobs:
           fi
           # No package script runs beside the OIDC credential. The "./" matters:
           # npm reads a bare "package/x.tgz" as a GitHub "owner/repo".
-          npx --yes npm@11.21.0 publish ./package/*.tgz --ignore-scripts --access public
+          npx --yes npm@11.21.0 stage publish ./package/*.tgz --ignore-scripts --access public
