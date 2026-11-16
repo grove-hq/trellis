@@ -172,9 +172,35 @@ ruleTester.run("confine-import", rule, {
   ],
 
   invalid: [
+    // A package ban covers the package's subpaths.
+    {
+      code: `import { HttpClient } from "acme-db/server/lib/client.js";`,
+      filename: at("apps/web/src/lib/thing.ts"),
+      options,
+      errors: 1,
+    },
     // pathSuffix: an extension on the specifier names the same module.
     {
       code: `import { query } from "./_generated/server.js";`,
+      filename: at("packages/backend/src/things.ts"),
+      options,
+      errors: 1,
+    },
+    // pathSuffix: so do the folder's index, a trailing slash and a detour through "..".
+    {
+      code: `import { query } from "./_generated/server/index.js";`,
+      filename: at("packages/backend/src/things.ts"),
+      options,
+      errors: 1,
+    },
+    {
+      code: `import { query } from "./_generated/server/";`,
+      filename: at("packages/backend/src/things.ts"),
+      options,
+      errors: 1,
+    },
+    {
+      code: `import { query } from "@acme/backend/lib/../_generated/server";`,
       filename: at("packages/backend/src/things.ts"),
       options,
       errors: 1,
@@ -448,6 +474,29 @@ ruleTester.run("confine-import (relative spellings)", rule, {
       options: DIR_BAN,
       errors: [{ messageId: "confined" }],
     },
+  ],
+});
+
+// A Node built-in is one module whether or not it is spelled with "node:".
+// "sqlite" has no bare spelling, so that name is an npm package.
+const BUILTIN_BANS = [
+  {
+    root: ROOT,
+    bans: [
+      { package: "node:fs", allowlist: [], message: "files only through the store" },
+      { package: "node:sqlite", allowlist: [], message: "the database only through the client" },
+    ],
+  },
+];
+ruleTester.run("confine-import (Node built-ins)", rule, {
+  valid: [
+    { code: `import sqlite from "sqlite";`, filename: at("src/thing.ts"), options: BUILTIN_BANS },
+    { code: `import path from "node:path";`, filename: at("src/thing.ts"), options: BUILTIN_BANS },
+  ],
+  invalid: [
+    { code: `import fs from "fs";`, filename: at("src/thing.ts"), options: BUILTIN_BANS, errors: 1 },
+    { code: `import { readFile } from "node:fs/promises";`, filename: at("src/thing.ts"), options: BUILTIN_BANS, errors: 1 },
+    { code: `import { DatabaseSync } from "node:sqlite";`, filename: at("src/thing.ts"), options: BUILTIN_BANS, errors: 1 },
   ],
 });
 

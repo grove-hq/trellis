@@ -13,7 +13,7 @@ export default plugin;
 
 /**
  * @typedef {object} Ban
- * @property {string} [package] - Exact import specifier to confine (e.g. "pg"). Provide this OR `pathSuffix`.
+ * @property {string} [package] - npm package or Node built-in to confine, with its subpaths (e.g. "pg"). Provide this OR `pathSuffix`.
  * @property {string} [pathSuffix] - Confine a first-party module by the tail of its import path (e.g. "/db/raw"), matching every relative depth. Provide this OR `package`.
  * @property {string[]} [allowedExports] - Allow ONLY these named exports anywhere; every other export is fenced. Omit to fence the whole module.
  * @property {string | string[]} allowlist - Root-relative path(s) with a leading "/" (an exact file, or `/dir/**`) of the file(s) allowed to import it. Pass `[]` when no file is exempt.
