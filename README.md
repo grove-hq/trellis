@@ -39,7 +39,9 @@ The utilities supplied here are the ones we commonly use under many of the archi
 
 ## Patterns
 
-TBD.
+Each pattern is an architectural guarantee and the way to enforce it. They are shown working in the [sample app](https://github.com/grove-hq/trellis-sample).
+
+- [Authentication](docs/patterns/authentication.md): no request reaches a handler without an authenticated caller.
 
 ## What Trellis does not do (a bit of a disclaimer)
 
