@@ -82,5 +82,6 @@ jobs:
             echo "@grovehq/trellis@${VERSION} is already on npm."
             exit 0
           fi
-          # No package script runs beside the OIDC credential.
-          npx --yes npm@11.21.0 publish package/*.tgz --ignore-scripts --access public
+          # No package script runs beside the OIDC credential. The "./" matters:
+          # npm reads a bare "package/x.tgz" as a GitHub "owner/repo".
+          npx --yes npm@11.21.0 publish ./package/*.tgz --ignore-scripts --access public
