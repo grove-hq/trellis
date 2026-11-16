@@ -1,6 +1,6 @@
 {
   "name": "@grovehq/trellis",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Keeps a codebase's most important guarantees true when most of its code is written by AI agents.",
   "license": "Apache-2.0",
   "repository": {
