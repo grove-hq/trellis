@@ -42,6 +42,7 @@ The utilities supplied here are the ones we commonly use under many of the archi
 Each pattern is an architectural guarantee and the way to enforce it. They are shown working in the [sample app](https://github.com/grove-hq/trellis-sample).
 
 - [Authentication](docs/patterns/authentication.md): no request reaches a handler without an authenticated caller.
+- [Tenant isolation](docs/patterns/tenant-isolation.md): no query reads or writes another tenant's data.
 
 ## What Trellis does not do (a bit of a disclaimer)
 
