@@ -62,7 +62,8 @@ function modulePath(path) {
   return posix.normalize(path.replaceAll("\\", "/")).replace(/\/+$/u, "").replace(SOURCE_EXTENSION, "").replace(/\/index$/u, "");
 }
 
-// `package` covers the package and its subpaths. `pathSuffix` is matched against
+// `package` covers the package and its subpaths, bar any the ban names in
+// `allowedSubpaths`. `pathSuffix` is matched against
 // the specifier as spelled and, for a relative one, as resolved from the
 // importing file, so a sibling's `./x` matches a suffix naming the module's directory.
 function banTargetsSpecifier(specifier, ban, filename) {
@@ -70,7 +71,9 @@ function banTargetsSpecifier(specifier, ban, filename) {
   if (ban.package !== undefined) {
     const banned = packageName(ban.package);
     const imported = packageName(specifier);
-    return imported === banned || imported.startsWith(banned + "/");
+    if (imported === banned) return true;
+    if (!imported.startsWith(banned + "/")) return false;
+    return !ban.allowedSubpaths?.includes(imported.slice(banned.length + 1));
   }
   const suffix = modulePath(ban.pathSuffix);
   if (modulePath(specifier).endsWith(suffix)) return true;
@@ -88,6 +91,7 @@ const banSchema = {
     package: { type: "string" },
     pathSuffix: { type: "string" },
     allowedExports: { type: "array", items: { type: "string" }, minItems: 1 },
+    allowedSubpaths: { type: "array", items: { type: "string" }, minItems: 1 },
     allowlist: {
       anyOf: [allowlistEntrySchema, { type: "array", items: allowlistEntrySchema }],
     },
