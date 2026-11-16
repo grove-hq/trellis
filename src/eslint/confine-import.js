@@ -2,16 +2,18 @@
 // so it is reached only through one sanctioned wrapper.
 //
 // A ban names its target one of two ways, and supplies exactly one:
-//   - `package`    — exact specifier match, for an npm package ("pg").
+//   - `package`    — an npm package or Node built-in ("pg"), with its subpaths.
 //   - `pathSuffix` — the import path ends with this, for a first-party module
 //                    whose relative spelling varies with the importer's depth.
 //
 // Each ban carries its own allowlist, so a file exempt from one ban is still
-// held to every other. Every way a runtime module edge can form is covered:
-// static import, re-export, and dynamic import() with a literal specifier. A
-// computed specifier is unreadable here; trellis/require-literal-dynamic-import
-// closes it. Type-only forms erase at compile time and are exempt.
+// held to every other. The ES module forms are covered: static import,
+// re-export, and dynamic import() with a literal specifier. A computed
+// specifier is unreadable here; trellis/require-literal-dynamic-import closes
+// it. Type-only forms erase at compile time and are exempt. `require()` and
+// other ways to load a module are not read: ban them separately.
 
+import { isBuiltin } from "node:module";
 import { isAbsolute, posix, relative, resolve } from "node:path";
 
 // A string literal or a zero-expression template; null for a computed specifier.
@@ -48,19 +50,33 @@ function isAllowlisted(filename, allowlist, root, cwd) {
   return patterns.some((pattern) => matchesPattern(rel, pattern));
 }
 
-// `pathSuffix` is matched with any source extension stripped, so `./x.js` and
-// `./x.ts` name the same module as `./x`. A relative specifier is also resolved
-// against the importing file, so a sibling's `./x` matches a suffix that names
-// the module's directory.
+// A Node built-in is one module with or without its "node:" prefix.
+function packageName(specifier) {
+  return isBuiltin(specifier) && !specifier.startsWith("node:") ? "node:" + specifier : specifier;
+}
+
+// The module a path names once resolution's own spellings are removed: a source
+// extension, the folder's index, a trailing slash, and any "." or ".." segment.
 const SOURCE_EXTENSION = /\.(?:[cm]?[jt]sx?)$/u;
+function modulePath(path) {
+  return posix.normalize(path.replaceAll("\\", "/")).replace(/\/+$/u, "").replace(SOURCE_EXTENSION, "").replace(/\/index$/u, "");
+}
+
+// `package` covers the package and its subpaths. `pathSuffix` is matched against
+// the specifier as spelled and, for a relative one, as resolved from the
+// importing file, so a sibling's `./x` matches a suffix naming the module's directory.
 function banTargetsSpecifier(specifier, ban, filename) {
   if (specifier === null) return false;
-  if (ban.package !== undefined) return specifier === ban.package;
-  const spelled = specifier.replaceAll("\\", "/").replace(SOURCE_EXTENSION, "");
-  if (spelled.endsWith(ban.pathSuffix)) return true;
-  if (!spelled.startsWith(".")) return false;
+  if (ban.package !== undefined) {
+    const banned = packageName(ban.package);
+    const imported = packageName(specifier);
+    return imported === banned || imported.startsWith(banned + "/");
+  }
+  const suffix = modulePath(ban.pathSuffix);
+  if (modulePath(specifier).endsWith(suffix)) return true;
+  if (!specifier.startsWith(".")) return false;
   const importer = "/" + filename.replaceAll("\\", "/");
-  return posix.join(posix.dirname(importer), spelled).endsWith(ban.pathSuffix);
+  return modulePath(posix.join(posix.dirname(importer), specifier.replaceAll("\\", "/"))).endsWith(suffix);
 }
 
 // A root-relative path: a leading "/", no "./", and "**" only as a trailing "/**".
