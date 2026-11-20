@@ -59,7 +59,7 @@ alex namespaces="trellis-ratify" sk-ecdsa-sha2-nistp256@openssh.com AAAA…
 
 A signature counts only for the files `CODEOWNERS` gives that person. The check reads this file from the base branch, so a key counts only once the pull request that adds it has merged, ratified by an existing key.
 
-The key must be one that signs only after a physical act. The signer supplied here uses Touch ID with a key held in a Mac's Secure Enclave.
+The key must be one that signs only after a physical act. The signer supplied here, `scripts/trellis/signers/touch-id.mjs`, uses Touch ID with a key held in a Mac's Secure Enclave.
 
 ## Guards that are not whole files
 
@@ -106,12 +106,40 @@ Both files are in the frame, so a changed pin or a new exception is a change the
 
 You copy the framework into your own repository. It is not fetched from this one when your checks run.
 
-1. Copy `scripts/trellis/` and the two workflows in `.github/workflows/` from this repository.
-2. Add the frame block to `CODEOWNERS`, with `/.github/CODEOWNERS`, `/.github/workflows/`, `/scripts/trellis/` and `/.trellis/` in it.
+1. Copy the contents of this repository's `framework/` folder into the root of your repository. That adds `scripts/trellis/` and two workflows, `.github/workflows/trellis.yml` and `.github/workflows/trellis-review.yml`.
+2. Add the frame block to `.github/CODEOWNERS`, with `/.github/CODEOWNERS`, `/.github/workflows/`, `/scripts/trellis/` and `/.trellis/` in it.
 3. Add each owner's key to `.trellis/allowed_signers`.
 4. Make the `Trellis` check required on your default branch, and allow changes to it only through pull requests.
 
+The check runs from your default branch, so it starts with the pull requests opened after the one that adds it has merged.
+
 The copy is deliberate. The check is the gate on every other guard, so its code belongs in your frame like theirs: an owner has read it, and an update arrives as a pull request they read and sign. Nothing outside your repository can change what the gate does.
+
+### Updating the copy
+
+From your repository's root, extract `framework/` from a release of this repository, with `v` set to the release you want:
+
+```sh
+v=0.2.0; curl -fsSL "https://github.com/grove-hq/trellis/archive/refs/tags/v$v.tar.gz" | tar -xzf - --strip-components=2 "trellis-$v/framework"
+```
+
+This overwrites the copied files. It does not delete a file the release no longer has. The result is a frame change like any other: open it as a pull request, and the owner reads and signs it.
+
+## The ladder
+
+The check in CI is the only part that must exist. Each step before it is an optional preview of the same rules, so a problem shows up while it is still cheap to fix.
+
+| Step | What runs | What it blocks |
+| --- | --- | --- |
+| Agent instructions | A few lines in the agent's instruction file: which files are frame, and that a change to one waits for its owner's signature | Nothing |
+| Commit hook | `node scripts/trellis/tripwire.mjs --staged` | Banned text, unmet pins |
+| Push hook | `node scripts/trellis/tripwire.mjs --local --range "origin/main...HEAD"` | Banned text, unmet pins |
+| CI check | The `Trellis` workflow | Frame changes, banned text, unmet pins |
+| Signature | `node scripts/trellis/ratify.mjs <pr>` | Clears its owner's frame changes |
+
+At commit and push, a frame change is listed as a warning, since only the owner's signature on the pull request can clear it. Only banned text and unmet pins block there.
+
+Skip the commit hook during a merge: it compares the index with the first parent only, so every line the merge brings in reads as added. The push hook and the CI check compare against the base branch and still cover the merge.
 
 ## What the framework assumes
 
