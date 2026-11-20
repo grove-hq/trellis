@@ -26,14 +26,14 @@ Put in the frame the smallest amount of code that holds an invariant: the lint c
 2. The file's owner lists the changes:
 
    ```
-   trellis ratify 123
+   node scripts/trellis/ratify.mjs 123
    ```
 
    This prints a link to each frame file's change on the pull request and a code. It signs nothing.
 3. Having read the changes, the owner signs:
 
    ```
-   trellis ratify 123 --sign <code>
+   node scripts/trellis/ratify.mjs 123 --sign <code>
    ```
 
    The signer asks for the owner's fingerprint, and the signature is posted as a comment on the pull request. The code ties the signature to the changes that were listed: if a frame file has changed since, nothing is signed.
@@ -102,10 +102,21 @@ A line a pull request adds outside the frame may not contain the text. Lines alr
 
 Both files are in the frame, so a changed pin or a new exception is a change the owner signs.
 
+## Setting it up
+
+You copy the framework into your own repository. It is not fetched from this one when your checks run.
+
+1. Copy `scripts/trellis/` and the two workflows in `.github/workflows/` from this repository.
+2. Add the frame block to `CODEOWNERS`, with `/.github/CODEOWNERS`, `/.github/workflows/`, `/scripts/trellis/` and `/.trellis/` in it.
+3. Add each owner's key to `.trellis/allowed_signers`.
+4. Make the `Trellis` check required on your default branch, and allow changes to it only through pull requests.
+
+The copy is deliberate. The check is the gate on every other guard, so its code belongs in your frame like theirs: an owner has read it, and an update arrives as a pull request they read and sign. Nothing outside your repository can change what the gate does.
+
 ## What the framework assumes
 
 - **The check is required, and only a pull request can change the default branch.** That is a branch rule in your repository's settings. Someone who can edit those rules, or bypass them, is outside what Trellis can hold.
 - **The owner reads before signing.** An agent can raise the prompt. The two-step command exists so the owner sees the changes first, and it cannot make them look.
 - **The key is what it claims to be.** Nothing proves a registered key is held in secure hardware. It is trusted because an owner ratified it into the frame.
 - **A verdict is as fresh as its last run.** The check runs when a pull request opens or changes and when a signature is posted, not at the moment of merge. A pull request checked before a rule changed keeps its result until it runs again.
-- **Git's diff is how a change is seen.** A file renamed to a name git writes in quotes, one with a non-ASCII character for example, is not read as a change to that file.
+- **It is built against shortcuts, not sabotage.** Trellis stops an agent, or a person in a hurry, from taking the short way round a guard. It reads a pull request through git's diff, and it is not proof against someone who deliberately engineers file names or branch history to hide a change from that diff. Peer review is what stands against that.
