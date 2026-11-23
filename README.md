@@ -25,11 +25,15 @@ A codebase written by agents grows the same way. You can't inspect every line, b
 
 Trellis does two things.
 
-**1. It provides a framework that makes the frame something only a human can change.** Certain files in the codebase form the frame: the lint rules, types, dependency rules and CI workflows that hold your architectural invariants. An agent can propose a change to a frame file like any other change. It can't land one until a human has ratified that exact change with proof of presence. Proof of presence is a signature that, for example, uses the person's fingerprint to ensure they have signed off on the change (which an agent working with that person's credentials can't supply).
+**1. It provides a [framework](#framework) that makes the frame something only a human can change.** Certain files in the codebase form the frame: the lint rules, types, dependency rules and CI workflows that hold your architectural invariants. An agent can propose a change to a frame file like any other change. It can't land one until a human has ratified that exact change with proof of presence. Proof of presence is a signature that, for example, uses the person's fingerprint to ensure they have signed off on the change (which an agent working with that person's credentials can't supply).
 
 What goes into the frame is the smallest amount of code that holds the invariant. A small frame is one a human can actually read when asked to ratify a change to it, and it leaves everything outside it free for agents to change.
 
 **2. It provides utilities and patterns for the common checks that should be in a frame.** The [utilities](#utilities) are checks you configure. The [patterns](#patterns) show how to use the framework and the utilities to enforce an architectural pattern, so that coding agents stick to it.
+
+## Framework
+
+- [The framework](docs/framework.md): what the frame is, how a change to it is ratified, and what the check assumes.
 
 ## Utilities
 
