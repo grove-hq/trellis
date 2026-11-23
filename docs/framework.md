@@ -80,7 +80,7 @@ Two more files in `.trellis/` cover guards smaller than a file. Both are optiona
 ]
 ```
 
-The check fails while a matching file's value differs. It compares the parsed JSON, the last pin matching a file and key wins, and a `null` value means the key must be absent. To change a pinned value, change the file and its pin in the same pull request.
+The check fails while a matching file's value differs. It compares the parsed JSON, the last pin matching a file and key wins, and a `null` value means the key must be absent. To change a pinned value, change the file and its pin in the same commit.
 
 ### Banned text
 
@@ -98,9 +98,11 @@ The check fails while a matching file's value differs. It compares the parsed JS
 ]
 ```
 
-A line a pull request adds outside the frame may not contain the text. Lines already in the code are not scanned. `allow` lists the exceptions: `files` is a path, and `with` is further text the line must also contain. To allow a suppression, add the entry in the same pull request as the code.
+A line a pull request adds outside the frame may not contain the text. Lines already in the code are not scanned. `allow` lists the exceptions: `files` is a path, and `with` is further text the line must also contain. To allow a suppression, add the entry in the same commit as the code.
 
 Both files are in the frame, so a changed pin or a new exception is a change the owner signs.
+
+When a pin or a ban fails, the check prints that entry's `why`. Write there what to do instead.
 
 ## Setting it up
 

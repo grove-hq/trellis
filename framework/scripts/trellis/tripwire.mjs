@@ -29,9 +29,17 @@ const RATIFY_COMMAND = "node scripts/trellis/ratify.mjs <pr>";
 
 export const MESSAGES = {
   frame: `Trellis control-plane file: guard definitions change only with human ratification. Why: an agent that can edit the guards can disable them. Sanctioned path: keep this change in its own PR — this file's code owner clears this check by signing the change (${RATIFY_COMMAND}), for as long as the file's change stays as signed; changing it again needs a fresh signature (an allow entry in .trellis/banned-text.json does not clear a frame touch).`,
-  weakening: `This adds an enforcement-weakening suppression (the file:line and the exact token are named at the start of this line) — it switches off a check the rest of the codebase relies on. Why: a suppression that lands today is debt every later change silently inherits. Sanctioned path: remove that token and fix the underlying type or lint error; if the suppression is genuinely warranted, add an allow entry for it under that ban in .trellis/banned-text.json, which that file's code owner signs.`,
-  pin: `A JSON pin no longer holds (the file and the value its key must have are named at the start of this line). Why: the value is what runs a check, so editing it can switch the check off. Sanctioned path: restore the value; if the change is warranted, change its entry in .trellis/json-pins.json in the same PR, which that file's code owner signs.`,
+  weakening: (why) =>
+    `This adds banned text (the file:line and the text are named at the start of this line). Why: ${sentence(why)} Sanctioned path: remove it and fix what it was covering for; if it is genuinely warranted, add an allow entry for it under that ban in .trellis/banned-text.json in the same commit, which that file's code owner signs.`,
+  pin: (why) =>
+    `A JSON pin no longer holds (the file and the value its key must have are named at the start of this line). Why: ${sentence(why)} Sanctioned path: restore the value; if the change is warranted, change its entry in .trellis/json-pins.json in the same commit, which that file's code owner signs.`,
 };
+
+// A rule's `why` is free text; it is closed with a full stop where it has none.
+function sentence(text) {
+  const trimmed = text.trim();
+  return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
+}
 
 const FRAME_BEGIN = "# trellis:frame-begin";
 const FRAME_END = "# trellis:frame-end";
@@ -92,6 +100,7 @@ export function parseBans(text) {
     }
     return {
       token: ban.text,
+      why: ban.why,
       allow: allow.map((a) => ({ files: a.files, with: (a.with ?? "").split(/\s+/).filter(Boolean) })),
     };
   });
@@ -186,7 +195,7 @@ export function analyzeDiff(diffText, manifestGlobs, bans = []) {
       .filter(Boolean)
       .find((p) => matchesManifest(p, manifestGlobs));
     if (framePath) {
-      hits.push({ file: framePath, line: null, token: "frame path", message: MESSAGES.frame });
+      hits.push({ file: framePath, line: null, kind: "frame", token: "frame path", message: MESSAGES.frame });
       // A frame file quotes the bans in its own comments and tests, and every
       // edit to it needs its owner's signature, so its lines are not scanned.
       continue;
@@ -196,7 +205,7 @@ export function analyzeDiff(diffText, manifestGlobs, bans = []) {
     for (const { line, text } of f.added) {
       for (const ban of bans) {
         if (!text.includes(ban.token) || isAllowed(displayPath, text, ban)) continue;
-        hits.push({ file: displayPath, line, token: ban.token, message: MESSAGES.weakening });
+        hits.push({ file: displayPath, line, kind: "ban", token: ban.token, message: MESSAGES.weakening(ban.why) });
       }
     }
   }
@@ -232,7 +241,7 @@ export function jsonPinHits(pins, files, read) {
   for (const file of files) {
     const wanted = new Map();
     for (const pin of pins) {
-      if (matchesManifest(file, [pin.files])) wanted.set(pin.key, pin.value);
+      if (matchesManifest(file, [pin.files])) wanted.set(pin.key, pin);
     }
     if (wanted.size === 0) continue;
     const text = read(file);
@@ -244,15 +253,16 @@ export function jsonPinHits(pins, files, read) {
     } catch {
       parsed = false;
     }
-    for (const [key, value] of wanted) {
+    for (const [key, { value, why }] of wanted) {
       const found = key.split(".").reduce((node, part) => node?.[part], json);
       const holds = value === null ? found === undefined : isDeepStrictEqual(found, value);
       if (!parsed || !holds) {
         hits.push({
           file,
           line: null,
+          kind: "pin",
           token: `${key} must be ${value === null ? "absent" : JSON.stringify(value)}`,
-          message: MESSAGES.pin,
+          message: MESSAGES.pin(why),
         });
       }
     }
@@ -313,7 +323,6 @@ function ownersOf(filePath, codeowners) {
 }
 
 export const RATIFY_NAMESPACE = "trellis-ratify";
-const FRAME_TOKEN = "frame path";
 
 // What an owner signs: this PR's change to each frame file, by content (see
 // rawChanges). `target` is `<owner>/<repo>#<pr>`, so a signature holds for one
@@ -360,7 +369,7 @@ export function ratifyFrameHits(hits, headChanges, codeowners, signers = []) {
   const remaining = [];
   const ratified = [];
   for (const hit of hits) {
-    if (hit.token !== FRAME_TOKEN) {
+    if (hit.kind !== "frame") {
       remaining.push(hit);
       continue;
     }
@@ -627,7 +636,7 @@ function main(argv) {
   const state = statementOnly ? null : headState(source);
   const found = analyzeDiff(diffText, loadFrame(frameRef), state ? loadBans(state) : []);
   const codeowners = target ? loadCodeowners() : [];
-  const frameFiles = found.filter((h) => h.token === FRAME_TOKEN).map((h) => h.file);
+  const frameFiles = found.filter((h) => h.kind === "frame").map((h) => h.file);
   const statement =
     target && frameFiles.length ? buildStatement(target, headChanges, frameFiles) : "";
   if (statementOnly) {
@@ -645,8 +654,8 @@ function main(argv) {
     process.exit(0);
   }
   // Locally nothing can clear a frame touch, so it is listed but does not fail.
-  const unsigned = ci ? [] : hits.filter((h) => h.token === FRAME_TOKEN);
-  const blocking = ci ? hits : hits.filter((h) => h.token !== FRAME_TOKEN);
+  const unsigned = ci ? [] : hits.filter((h) => h.kind === "frame");
+  const blocking = ci ? hits : hits.filter((h) => h.kind !== "frame");
   console.log(buildReport(blocking, ratified, unsigned));
   process.exit(blocking.length === 0 ? 0 : 1);
 }

@@ -101,7 +101,7 @@ test("each weakening token on an added line is a hit", () => {
     const hits = analyzeDiff(modified("src/session.ts", [line]), MANIFEST, BANS);
     assert.equal(hits.length, 1, `expected exactly one hit for ${token}`);
     assert.equal(hits[0].token, token);
-    assert.equal(hits[0].message, MESSAGES.weakening);
+    assert.equal(hits[0].message, MESSAGES.weakening("fixture"));
     assert.equal(hits[0].line, 1);
   }
 });
@@ -234,7 +234,7 @@ test("a pinned key holding any other value is a hit", () => {
   const [hit, ...rest] = pinned({ [file]: withLint("eslint . --quiet") });
   assert.deepEqual(rest, []);
   assert.equal(hit.file, file);
-  assert.equal(hit.message, MESSAGES.pin);
+  assert.equal(hit.message, MESSAGES.pin("fixture"));
 
   const others = {
     removed: JSON.stringify({ scripts: {} }),
@@ -282,10 +282,22 @@ test("hit lines carry file, line number, token, and the JIT message", () => {
 });
 
 test("every message states the invariant, a why, and a sanctioned path", () => {
-  for (const [name, message] of Object.entries(MESSAGES)) {
+  const messages = { frame: MESSAGES.frame, weakening: MESSAGES.weakening("w"), pin: MESSAGES.pin("w") };
+  for (const [name, message] of Object.entries(messages)) {
     assert.match(message, /Why:/, `${name} is missing the why`);
     assert.match(message, /Sanctioned path:/, `${name} is missing the sanctioned path`);
   }
+});
+
+test("a ban or pin hit states its own rule's why", () => {
+  const two = [{ text: "aaa", why: "first reason" }, { text: "bbb", why: "second reason" }];
+  const hits = analyzeDiff(modified("src/x.ts", ["+bbb"]), MANIFEST, parseBans(JSON.stringify(two)));
+  assert.deepEqual(hits.map((h) => h.message), [MESSAGES.weakening("second reason")]);
+  assert.ok(hits[0].message.includes("second reason"));
+
+  const [hit] = pinned({ "a.json": "{}" }, [{ files: "a.json", key: "k", value: 1, why: "pin reason" }]);
+  assert.equal(hit.message, MESSAGES.pin("pin reason"));
+  assert.ok(hit.message.includes("pin reason"));
 });
 
 test("buildAnnotations renders each hit as a GitHub ::error:: workflow command", () => {
@@ -604,6 +616,26 @@ test("in each local mode a frame touch with banned text fails, and both are repo
     assert.equal(code, 1, `${mode}: ${out}`);
     assert.match(out, /feature\.ts:1 — as any/, mode);
     assert.ok(out.includes(FRAME_FILE), `${mode}: ${out}`);
+  });
+});
+
+// The exception travels with the line it allows, so all that is left is the
+// frame touch its owner signs.
+test("in each local mode banned text beside its allow entry passes, and the bans file is named", () => {
+  const allowing = [{ text: "as any", why: "fixture", allow: [{ files: "feature.ts", why: "fixture" }] }];
+  const change = { [BANNED_TEXT_PATH]: JSON.stringify(allowing), "feature.ts": `${WEAKENING_LINE}\n` };
+  inEachLocalMode(change, ({ code, out }, mode) => {
+    assert.equal(code, 0, `${mode}: ${out}`);
+    assert.ok(out.includes(BANNED_TEXT_PATH), `${mode}: ${out}`);
+  });
+});
+
+test("in each local mode a ban whose text is a frame hit's label still blocks", () => {
+  const ban = [{ text: "frame path", why: "fixture" }];
+  const change = { [BANNED_TEXT_PATH]: JSON.stringify(ban), "feature.ts": "// frame path\n" };
+  inEachLocalMode(change, ({ code, out }, mode) => {
+    assert.equal(code, 1, `${mode}: ${out}`);
+    assert.match(out, /feature\.ts:1/, mode);
   });
 });
 
@@ -987,7 +1019,7 @@ test("changing a frame file with a space in its name voids the signature", () =>
 });
 
 test("a signature does not clear a frame hit whose change is unknown", () => {
-  const hit = { file: SIGNED_FRAME_FILE, line: null, token: "frame path", message: "" };
+  const hit = { file: SIGNED_FRAME_FILE, line: null, kind: "frame", token: "frame path", message: "" };
   const codeowners = parseCodeowners(`/${SIGNED_FRAME_FILE} @owner\n`);
   assert.deepEqual(ratifyFrameHits([hit], new Map(), codeowners, ["owner"]).hits, [hit]);
 });
