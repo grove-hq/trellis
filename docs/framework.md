@@ -57,7 +57,7 @@ The owner signs a statement of the pull request's frame changes: each changed fr
 alex namespaces="trellis-ratify" sk-ecdsa-sha2-nistp256@openssh.com AAAA…
 ```
 
-A signature counts only for the files `CODEOWNERS` gives that person. The check reads this file from the base branch, so a key counts only once the pull request that adds it has merged, ratified by an existing key.
+A signature counts only for the files `CODEOWNERS` gives that person. The check reads this file from the base branch, so a key counts only once the pull request that adds it has merged, ratified by an existing key. The first key arrives with the pull request that adds the framework.
 
 The key must be one that signs only after a physical act. The signer supplied here, `scripts/trellis/signers/touch-id.mjs`, uses Touch ID with a key held in a Mac's Secure Enclave.
 
@@ -111,7 +111,8 @@ You copy the framework into your own repository. It is not fetched from this one
 1. Copy the contents of this repository's `framework/` folder into the root of your repository. That adds `scripts/trellis/` and two workflows, `.github/workflows/trellis.yml` and `.github/workflows/trellis-review.yml`.
 2. Add the frame block to `.github/CODEOWNERS`, with `/.github/CODEOWNERS`, `/.github/workflows/`, `/scripts/trellis/` and `/.trellis/` in it.
 3. Add each owner's key to `.trellis/allowed_signers`.
-4. Make the `Trellis` check required on your default branch, and allow changes to it only through pull requests.
+4. Leave `scripts/trellis/` out of your own linter and test runner. Its tests run on Node's built-in runner: `node --test scripts/trellis/tripwire.test.mjs`.
+5. Make the `Trellis` check required on your default branch, and allow changes to it only through pull requests.
 
 The check runs from your default branch, so it starts with the pull requests opened after the one that adds it has merged.
 
