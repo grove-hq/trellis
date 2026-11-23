@@ -123,7 +123,7 @@ The copy is deliberate. The check is the gate on every other guard, so its code 
 From your repository's root, extract `framework/` from a release of this repository, with `v` set to the release you want:
 
 ```sh
-v=0.2.0; curl -fsSL "https://github.com/grove-hq/trellis/archive/refs/tags/v$v.tar.gz" | tar -xzf - --strip-components=2 "trellis-$v/framework"
+v=0.2.1; curl -fsSL "https://github.com/grove-hq/trellis/archive/refs/tags/v$v.tar.gz" | tar -xzf - --strip-components=2 "trellis-$v/framework"
 ```
 
 This overwrites the copied files. It does not delete a file the release no longer has. The result is a frame change like any other: open it as a pull request, and the owner reads and signs it.
