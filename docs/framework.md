@@ -112,11 +112,27 @@ You copy the framework into your own repository. It is not fetched from this one
 2. Add the frame block to `.github/CODEOWNERS`, with `/.github/CODEOWNERS`, `/.github/workflows/`, `/scripts/trellis/` and `/.trellis/` in it.
 3. Add each owner's key to `.trellis/allowed_signers`.
 4. Leave `scripts/trellis/` out of your own linter and test runner. Its tests run on Node's built-in runner: `node --test scripts/trellis/tripwire.test.mjs`.
-5. Make the `Trellis` check required on your default branch, and allow changes to it only through pull requests.
+5. Once that pull request has merged, [make the check binding](#making-the-check-binding).
 
 The check runs from your default branch, so it starts with the pull requests opened after the one that adds it has merged.
 
 The copy is deliberate. The check is the gate on every other guard, so its code belongs in your frame like theirs: an owner has read it, and an update arrives as a pull request they read and sign. Nothing outside your repository can change what the gate does.
+
+### Making the check binding
+
+Until the `Trellis` check is required, it only reports: a pull request whose check has failed can still be merged. A branch ruleset makes it binding.
+
+In your repository's settings, under Rules, create a ruleset that targets the default branch, and turn on:
+
+- **Require a pull request before merging.** Nothing then reaches the branch except through a pull request, which is what the check judges.
+- **Require status checks to pass**, with `Trellis` in the list.
+- **Block force pushes** and **Restrict deletions**.
+
+Leave the bypass list empty. Anyone on it can merge past a failed check, so they are outside what Trellis holds.
+
+Do this after the pull request that adds the framework has merged. Until the workflow is on the default branch no pull request gets a `Trellis` run, and a required check that never reports blocks every merge, that pull request's included.
+
+To confirm it works, open a pull request that changes a frame file. The check fails, and the pull request cannot be merged until the file's owner signs.
 
 ### Updating the copy
 
