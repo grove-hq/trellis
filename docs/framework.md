@@ -108,13 +108,15 @@ When a pin or a ban fails, the check prints that entry's `why`. Write there what
 
 You copy the framework into your own repository. It is not fetched from this one when your checks run.
 
-1. Copy the contents of this repository's `framework/` folder into the root of your repository. That adds `scripts/trellis/` and two workflows, `.github/workflows/trellis.yml` and `.github/workflows/trellis-review.yml`.
-2. Add the frame block to `.github/CODEOWNERS`, with `/.github/CODEOWNERS`, `/.github/workflows/`, `/scripts/trellis/` and `/.trellis/` in it.
+1. Copy the contents of this repository's `framework/` folder into the root of your repository. That adds `scripts/trellis/`, two workflows, `.github/workflows/trellis.yml` and `.github/workflows/trellis-review.yml`, and the [Claude Code hooks](#claude-code-hooks) in `.claude/hooks/`.
+2. Add the frame block to `.github/CODEOWNERS`, with `/.github/CODEOWNERS`, `/.github/workflows/`, `/scripts/trellis/` and `/.trellis/` in it. If you use the hooks, add `/.claude/hooks/` and `/.claude/settings.json` too.
 3. Add each owner's key to `.trellis/allowed_signers`.
-4. Leave `scripts/trellis/` out of your own linter and test runner. Its tests run on Node's built-in runner: `node --test scripts/trellis/tripwire.test.mjs`.
+4. Leave `scripts/trellis/` and `.claude/hooks/` out of your own linter and test runner. Their tests run on Node's built-in runner: `node --test scripts/trellis/tripwire.test.mjs .claude/hooks/hooks.test.mjs`.
 5. Once that pull request has merged, [make the check binding](#making-the-check-binding).
 
 The check runs from your default branch, so it starts with the pull requests opened after the one that adds it has merged.
+
+Keep the two workflows as separate files. The second runs when a comment is posted, and a run started that way must never report a check named `Trellis`.
 
 The copy is deliberate. The check is the gate on every other guard, so its code belongs in your frame like theirs: an owner has read it, and an update arrives as a pull request they read and sign. Nothing outside your repository can change what the gate does.
 
@@ -139,7 +141,7 @@ To confirm it works, open a pull request that changes a frame file. The check fa
 From your repository's root, extract `framework/` from a release of this repository, with `v` set to the release you want:
 
 ```sh
-v=0.2.1; curl -fsSL "https://github.com/grove-hq/trellis/archive/refs/tags/v$v.tar.gz" | tar -xzf - --strip-components=2 "trellis-$v/framework"
+v=0.3.0; curl -fsSL "https://github.com/grove-hq/trellis/archive/refs/tags/v$v.tar.gz" | tar -xzf - --strip-components=2 "trellis-$v/framework"
 ```
 
 This overwrites the copied files. It does not delete a file the release no longer has. The result is a frame change like any other: open it as a pull request, and the owner reads and signs it.
@@ -150,7 +152,9 @@ The check in CI is the only part that must exist. Each step before it is an opti
 
 | Step | What runs | What it blocks |
 | --- | --- | --- |
-| Agent instructions | A few lines in the agent's instruction file: which files are frame, and that a change to one waits for its owner's signature | Nothing |
+| [Agent instructions](#agent-instructions) | A few lines in the agent's instruction file: which files are frame, and that a change to one waits for its owner's signature | Nothing |
+| [Edit hook](#claude-code-hooks) | The tripwire on each file Claude Code edits | Nothing: the agent is told at once |
+| [Stop hook](#claude-code-hooks) | ESLint on the files a Claude Code session edited | The end of the agent's turn, once |
 | Commit hook | `node scripts/trellis/tripwire.mjs --staged` | Banned text, unmet pins |
 | Push hook | `node scripts/trellis/tripwire.mjs --local --range "origin/main...HEAD"` | Banned text, unmet pins |
 | CI check | The `Trellis` workflow | Frame changes, banned text, unmet pins |
@@ -159,6 +163,29 @@ The check in CI is the only part that must exist. Each step before it is an opti
 At commit and push, a frame change is listed as a warning, since only the owner's signature on the pull request can clear it. Only banned text and unmet pins block there.
 
 Skip the commit hook during a merge: it compares the index with the first parent only, so every line the merge brings in reads as added. The push hook and the CI check compare against the base branch and still cover the merge.
+
+### Agent instructions
+
+A section like this in `AGENTS.md` or `CLAUDE.md` is enough:
+
+```markdown
+## Trellis
+
+This repo uses [Trellis](https://github.com/grove-hq/trellis). A few files, called the frame, hold the rules the rest of the code relies on, and only their owner can change them.
+
+The block between `# trellis:frame-begin` and `# trellis:frame-end` in `.github/CODEOWNERS` lists the frame. You can change a file in it, and the pull request's `Trellis` check then stays red until that file's owner signs the change. If you are changing one to get a check to pass, fix the code instead.
+```
+
+### Claude Code hooks
+
+Two hooks in `.claude/hooks/` give [Claude Code](https://claude.com/claude-code) the same findings while it works. To switch them on, add the `hooks` block from `.claude/hooks/settings.example.json` to your `.claude/settings.json`.
+
+- **After an edit**, `trellis-edit.mjs` runs the tripwire on the file. Banned text or an unmet pin goes back to the agent as an error, on every edit until it is fixed. A frame file gets one note per session, naming its owner. The edit is already saved, and the hook does not undo it.
+- **At the end of a turn**, `lint-on-stop.mjs` runs ESLint on the files the session edited that have changed since it last linted them. A failure holds the turn open once, so the agent can fix it. After that the turn ends and you are told what still fails. A warning counts where the package's `lint` script has `--max-warnings 0`.
+
+The hooks see only the edits Claude Code makes with its own edit tools. A file rewritten by a shell command is not checked until the commit hook or the CI check. The stop hook needs ESLint with a flat config, and does nothing in a folder without one.
+
+If you do not use Claude Code, delete `.claude/hooks/`.
 
 ## What the framework assumes
 

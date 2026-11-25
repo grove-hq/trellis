@@ -1,6 +1,6 @@
 {
   "name": "@grovehq/trellis",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Keeps a codebase's most important guarantees true when most of its code is written by AI agents.",
   "license": "Apache-2.0",
   "repository": {
@@ -22,7 +22,7 @@
   ],
   "scripts": {
     "lint": "eslint .",
-    "test": "node --test"
+    "test": "node --test && node --test framework/.claude/hooks/hooks.test.mjs"
   },
   "peerDependencies": {
     "eslint": "^9.0.0 || ^10.0.0"
